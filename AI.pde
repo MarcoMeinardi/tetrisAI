@@ -177,10 +177,31 @@ class AI {
         
         int actual_holes = count_holes (state);
         int new_holes = actual_holes - previous_holes;
-        score -= new_holes;
+        score -= new_holes * 2;
         
-        // no!!!!
-        score += (state.lines_cleared - actual_lines) * 10;
+        score += (state.lines_cleared - actual_lines);
+        
+        // bumpiness
+        int bumpiness = 0;
+        
+        int prev;
+        int actual;
+        for (prev = 0; prev < 20; prev++) {
+            if (state.grid[prev][0] == 1) {
+                break;
+            }
+        }
+        for (int j = 1; j < 10; j++) {
+            for (actual = 0; actual < 20; actual++) {
+                if (state.grid[actual][j] == 1) {
+                    break;
+                }
+            }
+            bumpiness += abs (prev - actual);
+            prev = actual;
+        }
+        
+        score -= bumpiness / 2;
         
         
         return score;
