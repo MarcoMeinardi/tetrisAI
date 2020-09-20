@@ -72,9 +72,9 @@ class AI {
                 // if better then actual best set new best
                 
                 state.actual_piece.pos_y--;
-                int actual_score = get_score (state);
+                int actual_score = get_score (state.clone ());
                 if (actual_score > best_score) {
-                    println ("score:", actual_score);
+                    //println ("score:", actual_score);
                     best_ending_state = current.clone ();
                     best_score = actual_score;
                 }
@@ -163,11 +163,44 @@ class AI {
             }
         }
         score += state.actual_piece.pos_y + max_height;
-        
-        // holes
 
         
+        
+        
+        // holes
+        int previous_holes = count_holes (state);
+
+        // check if the actual piece clear lines
+        int actual_lines = state.lines_cleared;
+        state.shift_down ();
+        state.clear_previous ();
+        
+        int actual_holes = count_holes (state);
+        int new_holes = actual_holes - previous_holes;
+        score -= new_holes;
+        
+        // no!!!!
+        score += (state.lines_cleared - actual_lines) * 10;
+        
+        
         return score;
+    }
+    
+    int count_holes (Game state) {
+        int holes = 0;
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 10; j++) {
+                if (state.grid[i][j] == 1) {
+                    int y = i + 1;
+                    while (y < 20 && state.grid[y][j] == 0) {
+                        holes++;
+                        y++;
+                    }
+                }
+            }
+        }
+        
+        return holes;
     }
 }
 

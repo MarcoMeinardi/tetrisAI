@@ -8,6 +8,7 @@ void setup () {
     textFont (createFont ("Bungee Inline", 50));
     frameRate (10000);
 }
+
 void draw () {
     if (game.game.game_over) {
         noLoop ();
