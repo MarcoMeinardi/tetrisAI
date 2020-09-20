@@ -149,7 +149,7 @@ class Game {
         // GUI
         push ();
         
-        translate (760, 450);
+        translate (740, 450);
         textSize (30);
         fill (0);
         text ("SCORE: " + score, 0, 0);

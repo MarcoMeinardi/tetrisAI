@@ -85,7 +85,8 @@ class AI {
             closed.add (current.clone ());
             delete (open, current);
             
-            for (int i = 0; i < 5; i++) {
+            for (int fake_i = 1; fake_i < 6; fake_i++) { // try last the down move to feel more "human"
+                int i = fake_i % 5;
                 if (fake_move (state, i)) {
                     Piece next = state.actual_piece.clone ();
                     if (contains (closed, next) == null) {
@@ -164,13 +165,13 @@ class AI {
         }
         score += state.actual_piece.pos_y + max_height;
 
-        
-        
-        
         // holes
         int previous_holes = count_holes (state);
+        
+        // empty pillars
+        int previous_pillars = count_pillars (state);
 
-        // check if the actual piece clear lines
+        // simulate placing
         int actual_lines = state.lines_cleared;
         state.shift_down ();
         state.clear_previous ();
@@ -179,7 +180,11 @@ class AI {
         int new_holes = actual_holes - previous_holes;
         score -= new_holes * 2;
         
-        score += (state.lines_cleared - actual_lines);
+        int actual_pillars = count_pillars (state);
+        int new_pillars = actual_pillars - previous_pillars;
+        score -= new_pillars * 3;
+        
+        score += (int) pow (3, state.lines_cleared - actual_lines) - 1;
         
         // bumpiness
         int bumpiness = 0;
@@ -222,6 +227,28 @@ class AI {
         }
         
         return holes;
+    }
+    
+    int count_pillars (Game state) {
+        int pillars = 0;
+        for (int j = 0; j < 10; j++) {
+            int base;
+            for (base = 0; base < 20; base++) {
+                if (state.grid[base][j] == 1) {
+                    break;
+                }
+            }
+            base--;
+            int pillar_height = 0;
+            while (base >= 0 && (j == 0 || state.grid[base][j - 1] == 1) && (j == 9 || state.grid[base][j + 1] == 1)) {
+                pillar_height++;
+                base--;
+            }
+            if (pillar_height > 3) {
+                pillars++;
+            }
+        }
+        return pillars;
     }
 }
 
