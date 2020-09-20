@@ -7,39 +7,53 @@ class AI {
     
     AI () {
         game = new Game ();
-        path_ind = -1;
+        
+        get_moves ();
     }
     
     void play () {
-        if (path_ind == -1) {
-            game.move (0);
-            dijkstra ();
-            best_path = new IntList ();
-                
-            while (best_ending_state != null) {
-                best_path.append (best_ending_state.previous_move);
-                best_ending_state = best_ending_state.previous;
+        if (!game.game_over) {
+            if (path_ind == -1) {
+                game.move (0);
+                get_moves ();
+            } else {
+                game.move (best_path.get (path_ind));
+                path_ind--;
             }
-            path_ind = best_path.size() - 1;
-        } else {
-            game.move (best_path.get (path_ind));
-            path_ind--;
         }
-            
         game.show ();
     }
     
-    // dijkstra algorithm to find optimal moves to reach every ending state and save the best one
-    void dijkstra () {
+    void get_moves () {
+        best_score = -1000000005;
         Game cp = game.clone ();
-        cp.clear_previous ();
+        dijkstra (cp);
+        int actual_best = best_score;
+        cp.hold ();
+        dijkstra (cp);
+        if (actual_best < best_score) {
+            game.hold ();
+        }
+        best_path = new IntList ();
+            
+        while (best_ending_state != null) {
+            best_path.append (best_ending_state.previous_move);
+            best_ending_state = best_ending_state.previous;
+        }
+        path_ind = best_path.size() - 2;
+    }
+    
+    // dijkstra algorithm to find optimal moves to reach every ending state and save the best one
+    void dijkstra (Game state) {
+        state.clear_previous ();
         
         ArrayList <Piece> open   = new ArrayList <Piece> ();
         ArrayList <Piece> closed = new ArrayList <Piece> ();
         
-        Piece current = new Piece (cp.actual_piece.id);
+        Piece current = new Piece (state.actual_piece.id);
         current.g_score = 0;
         open.add (current.clone ());
+        
         while (!open.isEmpty ()) {
             // get state with lowest g score
             int best_index = 0;
@@ -49,26 +63,31 @@ class AI {
                 }
             }
             current = open.get (best_index).clone ();
-            cp.actual_piece = current.clone();
+            state.actual_piece = current.clone();
             
             // check if ending state
-            cp.actual_piece.pos_y++;
-            if (cp.collide ()) {
-                // found one ending state
+            state.actual_piece.pos_y++;
+            if (state.collide ()) {
+                // ending state found
                 // if better then actual best set new best
                 
-                best_ending_state = current.clone ();
-                
-                return;
+                state.actual_piece.pos_y--;
+                int actual_score = get_score (state);
+                if (actual_score > best_score) {
+                    println ("score:", actual_score);
+                    best_ending_state = current.clone ();
+                    best_score = actual_score;
+                }
+            } else {
+                state.actual_piece.pos_y--;
             }
-            cp.actual_piece.pos_y--;
             
             closed.add (current.clone ());
             delete (open, current);
             
             for (int i = 0; i < 5; i++) {
-                if (!fake_move (cp, i)) {
-                    Piece next = cp.actual_piece.clone ();
+                if (fake_move (state, i)) {
+                    Piece next = state.actual_piece.clone ();
                     if (contains (closed, next) == null) {
                         int g_attempt = current.g_score + 1;
                         Piece find = contains(open, next);
@@ -84,7 +103,7 @@ class AI {
                         }
                     }
                 }
-                undo_fake_move (cp, i);
+                undo_fake_move (state, i);
             }
         }
     }
@@ -108,7 +127,7 @@ class AI {
             break;
         }
         
-        return state.collide ();
+        return !state.collide ();
     }
     void undo_fake_move (Game state, int index) {
         switch (index) {
@@ -128,6 +147,27 @@ class AI {
             state.actual_piece.rotate_cl ();
             break;
         }
+    }
+    
+    int get_score (Game state) {
+        int score = 0;
+        
+        // height
+        int max_height = -1;
+        for (int i = 0; i < state.actual_piece.n && max_height == -1; i++) {
+            for (int j = 0; j < state.actual_piece.n; j++) {
+                if (state.actual_piece.blocks[i][j] == 1) {
+                    max_height = i;
+                    break;
+                }
+            }
+        }
+        score += state.actual_piece.pos_y + max_height;
+        
+        // holes
+
+        
+        return score;
     }
 }
 

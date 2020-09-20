@@ -34,6 +34,7 @@ class Piece {
         col = colors[id];
         
         g_score = 1000000005;
+        previous_move = -1;
     }
     
     void rotate_acl () {
